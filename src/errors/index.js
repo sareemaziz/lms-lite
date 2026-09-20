@@ -5,3 +5,5 @@ export { default as BookNotAvailableError } from "./BookNotAvailableError.js";
 export { default as BookNotFoundError } from "./BookNotFoundError.js";
 export { default as MemberNotFoundError } from "./MemberNotFoundError.js";
 export { default as LoanNotFoundError } from "./LoanNotFoundError.js";
+export { default as DuplicateIsbnError } from "./DuplicateIsbnError.js";
+export { default as DuplicateMemberError } from "./DuplicateMemberError.js";
