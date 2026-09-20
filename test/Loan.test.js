@@ -155,6 +155,12 @@ describe("Loan", () => {
       const longAfterDue = new Date("2025-12-01");
       expect(loan.calculateLateFee(longAfterDue)).toBe(0);
     });
+
+    it("charges exactly $0.50 for one day late", () => {
+      const loan = makeLoan();
+      const oneDayLate = new Date(loan.getDueDate().getTime() + 1 * 24 * 60 * 60 * 1000);
+      expect(loan.calculateLateFee(oneDayLate)).toBe(0.50);
+    });
   });
 
   // ── lateFee (stored property — not yet implemented) ──────
