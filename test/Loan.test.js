@@ -1,6 +1,7 @@
 import Book from "../src/models/Book.js";
 import Member from "../src/models/Member.js";
 import Loan from "../src/models/Loan.js";
+import LibraryService from "../src/services/LibraryService.js";
 import { FakeClock } from "../src/services/Clock.js";
 
 describe("Loan", () => {
@@ -153,6 +154,30 @@ describe("Loan", () => {
       loan.markReturned(new Date("2025-06-10"));
       const longAfterDue = new Date("2025-12-01");
       expect(loan.calculateLateFee(longAfterDue)).toBe(0);
+    });
+  });
+
+  // ── lateFee (stored property — not yet implemented) ──────
+
+  describe("lateFee", () => {
+    it("is 0 on a newly created loan", () => {
+      const loan = makeLoan();
+      expect(loan.getLateFee()).toBe(0);
+    });
+
+    it("is 0 when returned on the due date via LibraryService", () => {
+      const clock = new FakeClock(new Date("2025-06-01"));
+      const lib = new LibraryService(clock);
+      lib.addBook("Test Book", "Author", "ISBN-1", 1);
+      lib.registerMember("Alice", "M001");
+
+      const loan = lib.borrowBook("ISBN-1", "M001");
+
+      // Advance clock to the due date (borrow + 14 days)
+      clock.setNow(new Date("2025-06-15"));
+      lib.returnBook("ISBN-1", "M001");
+
+      expect(loan.getLateFee()).toBe(0);
     });
   });
 });
