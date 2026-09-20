@@ -6,6 +6,7 @@ class Loan {
   #borrowDate;
   #dueDate;
   #returnDate;
+  #lateFee;
 
   /**
    * @param {object} book   A Book instance.
@@ -24,6 +25,7 @@ class Loan {
     this.#borrowDate = borrowDate;
     this.#dueDate = new Date(borrowDate.getTime() + 14 * MS_PER_DAY);
     this.#returnDate = null;
+    this.#lateFee = 0;
   }
 
   /**
@@ -95,6 +97,16 @@ class Loan {
   /** @returns {Date|null} */
   getReturnDate() {
     return this.#returnDate;
+  }
+
+  /** @returns {number} */
+  getLateFee() {
+    return this.#lateFee;
+  }
+
+  /** @param {number} fee */
+  setLateFee(fee) {
+    this.#lateFee = fee;
   }
 }
 

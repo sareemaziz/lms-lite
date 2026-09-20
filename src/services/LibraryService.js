@@ -179,11 +179,7 @@ class LibraryService {
   #applyLateFee(loan) {
     const now = this.#clock.now();
     const fee = loan.calculateLateFee(now);
-    if (fee > 0) {
-      // Fee is calculated; caller may persist it. For now we just compute it.
-      // The book's returnCopy handles the copy count.
-    }
-    return fee;
+    loan.setLateFee(fee);
   }
 
   #closeLoan(loan) {
