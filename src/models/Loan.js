@@ -64,11 +64,8 @@ class Loan {
    * @post Otherwise: returns (daysBetween(dueDate, asOfDate)) * feePerDay.
    */
   calculateLateFee(asOfDate, feePerDay = 0.5) {
-    if (this.#returnDate !== null) {
-      return 0;
-    }
-    if (asOfDate <= this.#dueDate) {
-      return 0;
+    if (this.#returnDate !== null || asOfDate <= this.#dueDate) {
+      return NO_LATE_FEE;
     }
     const diffMs = asOfDate.getTime() - this.#dueDate.getTime();
     const days = Math.ceil(diffMs / MS_PER_DAY);
