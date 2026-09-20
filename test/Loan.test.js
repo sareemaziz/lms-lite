@@ -185,5 +185,19 @@ describe("Loan", () => {
 
       expect(loan.getLateFee()).toBe(0);
     });
+
+    it("is 0 when borrowed and returned on the same date, never negative", () => {
+      const clock = new FakeClock(new Date("2025-06-01"));
+      const lib = new LibraryService(clock);
+      lib.addBook("Test Book", "Author", "ISBN-1", 1);
+      lib.registerMember("Alice", "M001");
+
+      const loan = lib.borrowBook("ISBN-1", "M001");
+
+      // Return on the same date — no time has passed
+      lib.returnBook("ISBN-1", "M001");
+
+      expect(loan.getLateFee()).toBe(0);
+    });
   });
 });
