@@ -1,177 +1,234 @@
-# Library Management System — Specification
+# LMS-Lite — Method Specifications
 
-Pre-conditions, post-conditions, and error contracts for every public method.
+Pre-conditions, post-conditions, and exception contracts for every public method.
 
 ---
 
 ## Book
 
-**Fields:** `title`, `author`, `isbn`, `totalCopies`, `availableCopies`
+**Private fields:** `#title`, `#author`, `#isbn`, `#totalCopies`, `#availableCopies`
 
 ### `constructor(title, author, isbn, totalCopies)`
 
-- **Pre:**
-  - `title` is a non-empty string.
-  - `author` is a non-empty string.
-  - `isbn` is a non-empty string.
-  - `totalCopies` is an integer > 0.
-- **Post:**
-  - `availableCopies` is set equal to `totalCopies`.
-- **Throws:** `InvalidBookDataError` if any pre-condition is violated.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Create a new book entry with validated input. |
+| **Parameters** | `title` (string), `author` (string), `isbn` (string), `totalCopies` (number) |
+| **Pre** | `title`, `author`, `isbn` are non-empty strings (after `trim()`). `totalCopies` is an integer > 0. |
+| **Post** | All fields stored. `availableCopies` equals `totalCopies`. |
+| **Throws** | `InvalidBookDataError` if any pre-condition is violated. |
 
 ### `borrowCopy()`
 
-- **Pre:**
-  - `availableCopies > 0`.
-- **Post:**
-  - `availableCopies` is decremented by 1.
-- **Throws:** `BookNotAvailableError` if `availableCopies` is 0.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Record that one copy of this book has been borrowed. |
+| **Pre** | `availableCopies > 0`. |
+| **Post** | `availableCopies` decremented by 1. |
+| **Throws** | `BookNotAvailableError` if `availableCopies` is 0. |
 
 ### `returnCopy()`
 
-- **Pre:**
-  - `availableCopies < totalCopies`.
-- **Post:**
-  - `availableCopies` is incremented by 1.
-- **Throws:** N/A (caller must guarantee the pre-condition via Loan validation).
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Record that one copy has been returned. |
+| **Pre** | None enforced (safe no-op if all copies already available). |
+| **Post** | `availableCopies` incremented by 1, capped at `totalCopies`. |
+| **Throws** | None. |
 
 ### `matches(searchTerm)`
 
-- **Pre:** None.
-- **Post:**
-  - Returns `true` if `title` or `author` contains `searchTerm` (case-insensitive substring match).
-  - Returns `false` otherwise.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Check whether a search term appears in the title or author. |
+| **Parameters** | `searchTerm` (string) |
+| **Pre** | None. |
+| **Post** | Returns `true` if `title` or `author` contains `searchTerm` (case-insensitive substring match). Empty string matches everything. |
+
+### Getters
+
+`getTitle()`, `getAuthor()`, `getIsbn()`, `getAvailableCopies()`, `getTotalCopies()` — return the corresponding private field value.
 
 ---
 
 ## Member
 
-**Fields:** `name`, `memberId`
+**Private fields:** `#name`, `#memberId`
 
 ### `constructor(name, memberId)`
 
-- **Pre:**
-  - `name` is a non-empty string.
-  - `memberId` is a non-empty string.
-- **Post:**
-  - `name` and `memberId` are stored.
-- **Throws:** `InvalidMemberDataError` if any pre-condition is violated.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Create a new library member with validated input. |
+| **Parameters** | `name` (string), `memberId` (string) |
+| **Pre** | Both `name` and `memberId` are non-empty strings (after `trim()`). |
+| **Post** | Both values stored (trimmed). |
+| **Throws** | `InvalidMemberDataError` if any pre-condition is violated. |
+
+### Getters
+
+`getName()`, `getMemberId()` — return the corresponding private field value.
 
 ---
 
 ## Loan
 
-**Fields:** `book`, `member`, `borrowDate`, `dueDate`, `returnDate` (null until returned)
+**Private fields:** `#book`, `#member`, `#borrowDate`, `#dueDate`, `#returnDate`, `#lateFee`
 
-### `constructor(book, member, borrowDate, clock)`
+### `constructor(book, member, borrowDate)`
 
-- **Pre:** None (validation is delegated to `LibraryService`).
-- **Post:**
-  - `book`, `member`, `borrowDate` are stored.
-  - `dueDate` is set to `borrowDate + 14 days`.
-  - `returnDate` is `null`.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Create a loan record linking a book to a member. |
+| **Parameters** | `book` (Book), `member` (Member), `borrowDate` (Date) |
+| **Pre** | None (validation delegated to `LibraryService`). |
+| **Post** | `book`, `member`, `borrowDate` stored. `dueDate` = `borrowDate + 14 days`. `returnDate` = `null`. `lateFee` = `0`. |
 
 ### `markReturned(returnDate)`
 
-- **Pre:**
-  - `returnDate` is currently `null` (loan has not already been returned).
-- **Post:**
-  - `returnDate` is set to the provided value.
-- **Throws:** Error if `returnDate` is already set (loan already returned).
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Record that the loan has been returned. |
+| **Parameters** | `returnDate` (Date) |
+| **Pre** | `returnDate` is currently `null` (loan not yet returned). |
+| **Post** | `returnDate` set to the provided value. |
+| **Throws** | `Error("Loan has already been returned")` if called twice. |
 
 ### `isOverdue(asOfDate)`
 
-- **Pre:** None.
-- **Post:**
-  - Returns `true` if `returnDate` is `null` AND `asOfDate > dueDate`.
-  - Returns `false` otherwise.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Determine whether a loan is currently overdue. |
+| **Parameters** | `asOfDate` (Date) |
+| **Pre** | None. |
+| **Post** | Returns `true` if `returnDate` is `null` AND `asOfDate > dueDate`. Returns `false` otherwise. |
 
 ### `calculateLateFee(asOfDate, feePerDay = 0.5)`
 
-- **Pre:** None.
-- **Post:**
-  - If not returned or not late (`asOfDate <= dueDate`): returns `0`.
-  - Otherwise: returns `(daysBetween(dueDate, asOfDate)) × feePerDay`.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Calculate the late fee based on days overdue. |
+| **Parameters** | `asOfDate` (Date), `feePerDay` (number, default `0.5`) |
+| **Pre** | None. |
+| **Post** | Returns `0` if the loan has been returned or if `asOfDate <= dueDate`. Otherwise returns `ceil(days overdue) × feePerDay`. Fee is never negative. |
+| **Boundary** | Same-day return (asOfDate = borrowDate) always yields `0`. |
+
+### `getLateFee()` / `setLateFee(fee)`
+
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Read/write the stored late fee. Set by `LibraryService` during return. |
+| **Post** | `getLateFee()` returns the stored fee. `setLateFee(fee)` stores the value. |
+
+### Getters
+
+`getBook()`, `getMember()`, `getBorrowDate()`, `getDueDate()`, `getReturnDate()` — return the corresponding private field.
 
 ---
 
 ## Clock
 
-**Interface seam for time injection — replaces direct `new Date()` calls.**
+Both classes implement the same duck-typed interface: `now() → Date`.
 
-### `SystemClock.now()`
+### `SystemClock`
 
-- **Production implementation.**
-- **Post:** Returns `new Date()`.
+| Method | Behavior |
+|---|---|
+| `now()` | Returns `new Date()` (real system time). |
 
-### `FakeClock.now()`
+### `FakeClock`
 
-- **Test-double implementation.**
-- **Constructor:** Accepts a fixed `Date` (or timestamp).
-- **Post:** Returns the injected fixed date every time.
-- **Mutation:** `set(date)` advances the clock to a new fixed date for subsequent calls.
+| Aspect | Detail |
+|---|---|
+| **Constructor** | `FakeClock(fixedDate)` — stores a Date as the fixed time. |
+| `now()` | Returns the stored fixed date. |
+| `setNow(date)` | Advances the clock to a new fixed date for subsequent `now()` calls. |
+
+**Test-double seam:** `FakeClock` replaces `SystemClock` in tests to make date-dependent logic deterministic.
 
 ---
 
 ## LibraryService
 
-Orchestrator class. All public methods delegate to internal helpers.
-Internal helpers are listed in parentheses after each public method.
+**Private fields:** `#books`, `#members`, `#loans`, `#clock`
+
+### `constructor(clock)`
+
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Create a service instance with an injected clock. |
+| **Parameters** | `clock` — an object with a `now()` method returning a `Date`. |
+| **Post** | Internal arrays initialized empty. Clock stored for date operations. |
 
 ### `addBook(title, author, isbn, totalCopies)`
 
-- **Pre:**
-  - Delegates validation to `Book` constructor.
-  - `isbn` must not already exist in the catalog.
-- **Post:**
-  - A new `Book` is created and added to the catalog.
-- **Throws:** `InvalidBookDataError` (from Book), `DuplicateIsbnError` if ISBN already exists.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Add a validated book to the catalog. |
+| **Pre** | ISBN must not already exist in the catalog. |
+| **Post** | A new `Book` is created and stored. |
+| **Throws** | `InvalidBookDataError` (from Book), `DuplicateIsbnError` if ISBN exists. |
 
 ### `searchCatalog(searchTerm)`
 
-- **Pre:** None.
-- **Post:**
-  - Returns an array of `Book` instances where `book.matches(searchTerm)` is `true`.
-  - Returns an empty array if no matches.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Find books matching a search term. |
+| **Post** | Returns an array of `Book` instances where `book.matches(searchTerm)` is true. Empty array if no matches. |
 
 ### `registerMember(name, memberId)`
 
-- **Pre:**
-  - Delegates validation to `Member` constructor.
-  - `memberId` must not already be registered.
-- **Post:**
-  - A new `Member` is created and stored.
-- **Throws:** `InvalidMemberDataError` (from Member), `DuplicateMemberError` if memberId already exists.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Register a new library member. |
+| **Pre** | `memberId` must not already be registered. |
+| **Post** | A new `Member` is created and stored. |
+| **Throws** | `InvalidMemberDataError` (from Member), `DuplicateMemberError` if memberId exists. |
 
 ### `borrowBook(isbn, memberId)`
 
-Decomposed internally into: `findBookOrThrow`, `findMemberOrThrow`, `assertAvailable`, `createLoan`.
-
-- **Pre:**
-  - A book with the given `isbn` exists in the catalog.
-  - A member with the given `memberId` is registered.
-  - The book has `availableCopies > 0`.
-- **Post:**
-  - A new `Loan` is created linking the book and member.
-  - The book's `availableCopies` is decremented by 1.
-  - The current date (from `Clock.now()`) is used as `borrowDate`.
-- **Throws:** `BookNotFoundError`, `MemberNotFoundError`, `BookNotAvailableError`.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Create a loan for a member to borrow a book. |
+| **Internal helpers** | `#findBookOrThrow` → `#findMemberOrThrow` → `#assertAvailable` → `#createLoan` |
+| **Pre** | Book with ISBN exists. Member with memberId exists. Book has `availableCopies > 0`. |
+| **Post** | A new `Loan` is created. Book's `availableCopies` decremented by 1. `borrowDate` = `clock.now()`. |
+| **Throws** | `BookNotFoundError`, `MemberNotFoundError`, `BookNotAvailableError`. |
 
 ### `returnBook(isbn, memberId)`
 
-Decomposed internally into: `findActiveLoanOrThrow`, `applyLateFee`, `closeLoan`.
-
-- **Pre:**
-  - An active (unreturned) `Loan` exists for the given `isbn` and `memberId`.
-- **Post:**
-  - The loan's `returnDate` is set to today (via `Clock.now()`).
-  - If the loan is overdue, a late fee is calculated and applied (via `Loan.calculateLateFee`).
-  - The book's `availableCopies` is incremented by 1 (via `Book.returnCopy`).
-- **Throws:** `ActiveLoanNotFoundError` if no active loan matches.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Process the return of a borrowed book. |
+| **Internal helpers** | `#findActiveLoanOrThrow` → `#applyLateFee` → `#closeLoan` |
+| **Pre** | An active (unreturned) loan exists for the given ISBN and memberId. |
+| **Post** | Late fee calculated and stored on the loan. `returnDate` set to `clock.now()`. Book's `availableCopies` incremented by 1. |
+| **Throws** | `LoanNotFoundError` if no active loan matches. |
 
 ### `listOverdueLoans(asOfDate)`
 
-- **Pre:** None.
-- **Post:**
-  - Returns an array of `Loan` instances where `loan.isOverdue(asOfDate)` is `true`.
-  - Returns an empty array if none are overdue.
+| Aspect | Detail |
+|---|---|
+| **Purpose** | Retrieve all loans that are overdue as of a given date. |
+| **Post** | Returns an array of `Loan` instances where `loan.isOverdue(asOfDate)` is true. Empty array if none. |
+
+---
+
+## Exception Hierarchy
+
+All custom exceptions extend `LibraryError`, which extends `Error`.
+
+```
+Error
+└── LibraryError
+    ├── InvalidBookDataError
+    ├── InvalidMemberDataError
+    ├── BookNotAvailableError
+    ├── BookNotFoundError
+    ├── MemberNotFoundError
+    ├── LoanNotFoundError
+    ├── DuplicateIsbnError
+    └── DuplicateMemberError
+```
+
+Each subclass sets `this.name` to its own class name for identification.
