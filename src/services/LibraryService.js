@@ -137,7 +137,7 @@ class LibraryService {
 
   #createLoan(book, member) {
     book.borrowCopy();
-    const loan = new Loan(book, member, this.#clock.now(), this.#clock);
+    const loan = new Loan(book, member, this.#clock.now());
     this.#loans.push(loan);
     return loan;
   }

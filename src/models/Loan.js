@@ -20,7 +20,7 @@ class Loan {
    * @post dueDate is borrowDate + 14 days.
    * @post returnDate is null.
    */
-  constructor(book, member, borrowDate, clock) {
+  constructor(book, member, borrowDate) {
     this.#book = book;
     this.#member = member;
     this.#borrowDate = borrowDate;
