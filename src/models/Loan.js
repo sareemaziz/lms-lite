@@ -1,4 +1,5 @@
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const NO_LATE_FEE = 0;
 
 class Loan {
   #book;
@@ -25,7 +26,7 @@ class Loan {
     this.#borrowDate = borrowDate;
     this.#dueDate = new Date(borrowDate.getTime() + 14 * MS_PER_DAY);
     this.#returnDate = null;
-    this.#lateFee = 0;
+    this.#lateFee = NO_LATE_FEE;
   }
 
   /**
