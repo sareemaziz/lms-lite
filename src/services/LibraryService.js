@@ -156,8 +156,9 @@ class LibraryService {
    */
   returnBook(isbn, memberId) {
     const loan = this.#findActiveLoanOrThrow(isbn, memberId);
-    this.#applyLateFee(loan);
-    this.#closeLoan(loan);
+    const now = this.#clock.now();
+    this.#applyLateFee(loan, now);
+    this.#closeLoan(loan, now);
   }
 
   /** @throws {LoanNotFoundError} */
@@ -176,18 +177,13 @@ class LibraryService {
     return loan;
   }
 
-  #applyLateFee(loan) {
-    const now = this.#clock.now();
+  #applyLateFee(loan, now) {
     const fee = loan.calculateLateFee(now);
-    if (fee > 0) {
-      // Fee is calculated; caller may persist it. For now we just compute it.
-      // The book's returnCopy handles the copy count.
-    }
-    return fee;
+    loan.setLateFee(fee);
   }
 
-  #closeLoan(loan) {
-    loan.markReturned(this.#clock.now());
+  #closeLoan(loan, now) {
+    loan.markReturned(now);
     loan.getBook().returnCopy();
   }
 

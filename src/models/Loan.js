@@ -1,4 +1,5 @@
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const NO_LATE_FEE = 0;
 
 class Loan {
   #book;
@@ -6,6 +7,7 @@ class Loan {
   #borrowDate;
   #dueDate;
   #returnDate;
+  #lateFee;
 
   /**
    * @param {object} book   A Book instance.
@@ -24,6 +26,7 @@ class Loan {
     this.#borrowDate = borrowDate;
     this.#dueDate = new Date(borrowDate.getTime() + 14 * MS_PER_DAY);
     this.#returnDate = null;
+    this.#lateFee = NO_LATE_FEE;
   }
 
   /**
@@ -61,11 +64,8 @@ class Loan {
    * @post Otherwise: returns (daysBetween(dueDate, asOfDate)) * feePerDay.
    */
   calculateLateFee(asOfDate, feePerDay = 0.5) {
-    if (this.#returnDate !== null) {
-      return 0;
-    }
-    if (asOfDate <= this.#dueDate) {
-      return 0;
+    if (this.#returnDate !== null || asOfDate <= this.#dueDate) {
+      return NO_LATE_FEE;
     }
     const diffMs = asOfDate.getTime() - this.#dueDate.getTime();
     const days = Math.ceil(diffMs / MS_PER_DAY);
@@ -95,6 +95,16 @@ class Loan {
   /** @returns {Date|null} */
   getReturnDate() {
     return this.#returnDate;
+  }
+
+  /** @returns {number} */
+  getLateFee() {
+    return this.#lateFee;
+  }
+
+  /** @param {number} fee */
+  setLateFee(fee) {
+    this.#lateFee = fee;
   }
 }
 
